@@ -7,17 +7,21 @@ export function ensureEmailJs() {
 
   const key = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-  // Debug: zeigt genau, was im Build ankommt
-  console.log("EmailJS key at runtime:", JSON.stringify(key), "(len:", key?.length, ")");
+  // --- Debug: zeigt exakt, was ankommt
+  console.log("[EmailJS] key:", JSON.stringify(key), "len:", key?.length);
+  console.log("[EmailJS] version:", (emailjs as any)?.version || "unknown");
 
-  if (!key) {
-    console.error("EmailJS: VITE_EMAILJS_PUBLIC_KEY fehlt.");
+  if (!key || typeof key !== "string") {
+    console.error("[EmailJS] VITE_EMAILJS_PUBLIC_KEY fehlt/ist leer.");
     return;
   }
 
-  // >>> v4-Korrektur: Objekt-Signatur verwenden
-  // emailjs.init(key); // <-- alte (v3) Signatur, führt oft zu 'invalid'
-  emailjs.init({ publicKey: key });
-
-  inited = true;
+  try {
+    // v4 benötigt Objekt-Signatur:
+    emailjs.init({ publicKey: key });
+    inited = true;
+    console.log("[EmailJS] init OK");
+  } catch (e) {
+    console.error("[EmailJS] init error:", e);
+  }
 }
