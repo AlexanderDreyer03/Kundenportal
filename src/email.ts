@@ -17,15 +17,38 @@ export type ContactPayload = {
 
 /** Mappt unsere Payload exakt auf die Template-Variablen */
 function mapPayload(p: ContactPayload) {
+  // Sende ein Superset an Variablen, damit dein Template
+  // egal mit welchen Platzhaltern arbeitet.
   return {
+    // Name
     from_name: p.name,
+    name: p.name,
+
+    // E-Mail
     reply_to: p.email,
+    email: p.email,
+
+    // Telefon
     phone: p.phone ?? "",
 
+    // Thema
     topic: p.topic ?? "",
+    thema: p.topic ?? "",
+
+    // Kundentyp
     customer_type: p.customerType ?? "",
+    kundentyp: p.customerType ?? "",
+
+    // Nachricht / Hinweise
     message: p.message ?? "",
+    notes: p.message ?? "",
+
+    // Referenzlink
     ref_link: p.refLink ?? "",
+    refLink: p.refLink ?? "",
+  };
+}
+
   };
 }
 
