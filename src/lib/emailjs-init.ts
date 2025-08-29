@@ -5,9 +5,10 @@ let inited = false;
 export function ensureEmailJs() {
   if (inited) return;
 
-  const key = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+  // Public Key aus den Umgebungsvariablen laden und trimmen
+  const key = (import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "").trim();
 
-  // Debug: siehst du später in der Browser-Konsole auf der Live-Seite
+  // Debug-Ausgaben (nur in der Konsole sichtbar)
   console.log("[EmailJS] key:", JSON.stringify(key), "len:", key?.length);
   console.log("[EmailJS] version:", (emailjs as any)?.version || "unknown");
 
@@ -16,7 +17,7 @@ export function ensureEmailJs() {
     return;
   }
 
-  // WICHTIG: v4 benötigt Objekt-Signatur!
+  // EmailJS v4 benötigt Objekt-Signatur
   emailjs.init({ publicKey: key });
 
   inited = true;
