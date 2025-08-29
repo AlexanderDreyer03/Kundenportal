@@ -1,89 +1,52 @@
 import emailjs from "@emailjs/browser";
 
-const SERVICE_ID = "service_cxh6jaq";
-const TEMPLATE_ID = "template_f1ocakc";
-
-export type ContactPayload = {
+export interface ContactPayload {
+  topic?: string;
   name: string;
-  email: string;
   phone?: string;
+  email?: string;
+  message?: string;
+  refLink?: string;
+  referrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+}
 
-  topic?: string;          // z. B. ausgewählter Service/Thema
-  customerType?: string;   // "Privatkunde" | "Gewerbekunde"
-  message?: string;        // Freitext / Kommentar
-  refLink?: string;        // window.location.href
-};
-
-/**
- * Superset-Mapping: deckt viele mögliche Platzhalter im EmailJS-Template ab.
- * -> Damit erscheinen Werte auch dann, wenn dein Template andere Variablennamen nutzt.
- */
 function mapPayload(p: ContactPayload) {
-  const msg = p.message ?? "";
-  const topic = p.topic ?? "";
-  const cust = p.customerType ?? "";
-  const ref = p.refLink ?? "";
-
   return {
-    // Name
+    topic: p.topic,
     from_name: p.name,
-    name: p.name,
-
-    // E-Mail
+    phone: p.phone,
     reply_to: p.email,
-    email: p.email,
+    message: p.message,
 
-    // Telefon
-    phone: p.phone ?? "",
+    // Ref-Link
+    ref_link: p.refLink,
+    url: p.refLink,
 
-    // Thema / Subject / Betreff
-    topic,
-    thema: topic,
-    subject: topic,
-    betreff: topic,
+    // Referral
+    referrer: p.referrer,
+    empfohlen_von: p.referrer,
+    empfehlung: p.referrer,
 
-    // Kundentyp
-    customer_type: cust,
-    kundentyp: cust,
-    kundenart: cust,
-
-    // Kommentar / Nachricht / Hinweis / Wunsch (ALLE gängigen Aliasse)
-    message: msg,
-    notes: msg,
-    info: msg,
-    information: msg,
-    informationen: msg,
-    kommentar: msg,
-    comments: msg,
-    comment: msg,
-    hinweis: msg,
-    beschreibung: msg,
-    details: msg,
-    text: msg,
-    nachricht: msg,
-    wish: msg,
-    wunsch: msg,
-
-    // Referenz-Link / URL
-    ref_link: ref,
-    refLink: ref,
-    ref: ref,
-    url: ref,
-    page_url: ref,
+    // UTM
+    utm_source: p.utmSource,
+    utm_medium: p.utmMedium,
+    utm_campaign: p.utmCampaign,
   };
 }
 
-export async function sendContact(p: ContactPayload) {
+export async function sendAppointmentMail(p: ContactPayload) {
   try {
-    const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, mapPayload(p));
-    return res;
-  } catch (err: any) {
+    await emailjs.send(
+      import.meta.env.VITE_EMAILJS_SERVICE_ID!,
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID!,
+      mapPayload(p),
+      { publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY }
+    );
+  } catch (err) {
     console.error("EmailJS send error:", err);
-    const msg =
-      err?.text || err?.message || (typeof err === "string" ? err : "Unbekannter Fehler");
-    throw new Error(msg);
+    throw err;
   }
 }
-
-/** Kompatibilitäts-Alias: alter Importname bleibt funktionsfähig */
-export const sendAppointmentMail = (p: ContactPayload) => sendContact(p);
