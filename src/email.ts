@@ -11,9 +11,8 @@ export type ContactPayload = {
 };
 
 /**
- * Mapping der Payload auf die Template-Variablen in EmailJS.
- * 👉 Passe die Keys an, falls dein Template andere Variablennamen verwendet.
- * Standard bei EmailJS ist: from_name, reply_to, phone, message
+ * Mapping auf die Variablen deines EmailJS-Templates.
+ * Falls dein Template andere Namen nutzt, hier anpassen.
  */
 function mapPayload(p: ContactPayload) {
   return {
@@ -38,10 +37,4 @@ export async function sendContact(p: ContactPayload) {
   }
 }
 
-// Kompatibilität: Falls noch irgendwo sendAppointmentMail importiert wird
-export const sendAppointmentMail = (p: ContactPayload) => sendContact(p);
-
-}
-
-// Kompatibilität für vorhandenen Import in TerminBuchen.tsx
-export const sendAppointmentMail = (p: ContactPayload) => sendContact(p);
+// Kompatibilität: alter Importname bleibt nutzbar
