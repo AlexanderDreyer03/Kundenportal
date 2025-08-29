@@ -8,7 +8,6 @@ export type ContactPayload = {
   email: string;
   phone?: string;
 
-  // optionale Felder
   topic?: string;          // z. B. ausgewählter Service/Thema
   customerType?: string;   // "Privatkunde" | "Gewerbekunde"
   message?: string;        // Freitext / Kommentar
@@ -16,12 +15,14 @@ export type ContactPayload = {
 };
 
 /**
- * Superset-Mapping: bedient mehrere mögliche Template-Variablennamen.
- * So landen deine Werte im EmailJS-Template, egal ob du z. B.
- * {{from_name}} oder {{name}} nutzt, {{reply_to}} oder {{email}}, etc.
+ * Superset-Mapping: deckt viele mögliche Platzhalter im EmailJS-Template ab.
+ * -> Damit erscheinen Werte auch dann, wenn dein Template andere Variablennamen nutzt.
  */
 function mapPayload(p: ContactPayload) {
   const msg = p.message ?? "";
+  const topic = p.topic ?? "";
+  const cust = p.customerType ?? "";
+  const ref = p.refLink ?? "";
 
   return {
     // Name
@@ -35,15 +36,18 @@ function mapPayload(p: ContactPayload) {
     // Telefon
     phone: p.phone ?? "",
 
-    // Thema
-    topic: p.topic ?? "",
-    thema: p.topic ?? "",
+    // Thema / Subject / Betreff
+    topic,
+    thema: topic,
+    subject: topic,
+    betreff: topic,
 
     // Kundentyp
-    customer_type: p.customerType ?? "",
-    kundentyp: p.customerType ?? "",
+    customer_type: cust,
+    kundentyp: cust,
+    kundenart: cust,
 
-    // Nachricht / Hinweise / Kommentare (ALLE gängigen Aliasse)
+    // Kommentar / Nachricht / Hinweis / Wunsch (ALLE gängigen Aliasse)
     message: msg,
     notes: msg,
     info: msg,
@@ -51,12 +55,21 @@ function mapPayload(p: ContactPayload) {
     informationen: msg,
     kommentar: msg,
     comments: msg,
+    comment: msg,
     hinweis: msg,
+    beschreibung: msg,
+    details: msg,
+    text: msg,
+    nachricht: msg,
+    wish: msg,
+    wunsch: msg,
 
-    // Referenzlink (falls im Template genutzt)
-    ref_link: p.refLink ?? "",
-    refLink: p.refLink ?? "",
-    ref: p.refLink ?? "",
+    // Referenz-Link / URL
+    ref_link: ref,
+    refLink: ref,
+    ref: ref,
+    url: ref,
+    page_url: ref,
   };
 }
 
@@ -67,9 +80,7 @@ export async function sendContact(p: ContactPayload) {
   } catch (err: any) {
     console.error("EmailJS send error:", err);
     const msg =
-      err?.text ||
-      err?.message ||
-      (typeof err === "string" ? err : "Unbekannter Fehler");
+      err?.text || err?.message || (typeof err === "string" ? err : "Unbekannter Fehler");
     throw new Error(msg);
   }
 }
