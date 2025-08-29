@@ -8,17 +8,19 @@ export type ContactPayload = {
   email: string;
   phone?: string;
 
-  // zusätzliche Felder für bessere Darstellung
-  topic?: string;          // z.B. ausgewählter Service
+  // optionale Felder – falls du sie mitschickst
+  topic?: string;          // z. B. ausgewählter Service
   customerType?: string;   // "Privatkunde" | "Gewerbekunde"
   message?: string;        // Freitext/Hinweis
   refLink?: string;        // window.location.href
 };
 
-/** Mappt unsere Payload exakt auf die Template-Variablen */
+/**
+ * Superset-Mapping: bedient mehrere mögliche Template-Variablennamen.
+ * So kommen deine Werte im EmailJS-Template an, egal ob du z. B.
+ * {{from_name}} oder {{name}} benutzt, {{reply_to}} oder {{email}}, etc.
+ */
 function mapPayload(p: ContactPayload) {
-  // Sende ein Superset an Variablen, damit dein Template
-  // egal mit welchen Platzhaltern arbeitet.
   return {
     // Name
     from_name: p.name,
@@ -49,19 +51,19 @@ function mapPayload(p: ContactPayload) {
   };
 }
 
-  };
-}
-
 export async function sendContact(p: ContactPayload) {
   try {
-    return await emailjs.send(SERVICE_ID, TEMPLATE_ID, mapPayload(p));
+    const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, mapPayload(p));
+    return res;
   } catch (err: any) {
     console.error("EmailJS send error:", err);
     const msg =
-      err?.text || err?.message || (typeof err === "string" ? err : "Unbekannter Fehler");
+      err?.text ||
+      err?.message ||
+      (typeof err === "string" ? err : "Unbekannter Fehler");
     throw new Error(msg);
   }
 }
 
-// Kompatibilität
+/** Kompatibilitäts-Alias: alter Importname bleibt funktionsfähig */
 export const sendAppointmentMail = (p: ContactPayload) => sendContact(p);
