@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendAppointmentMail } from "../email";
+import { sendContact } from "../email";
 
 type Step = "customerType" | "service" | "form" | "done";
 type CustomerType = "privat" | "gewerbe";
@@ -108,28 +108,6 @@ function OptionCard(props: {
         fontWeight: 800,
         letterSpacing: "-0.01em",
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = isBrand
-          ? "0 0 0 4px rgba(79,70,229,0.25), 0 16px 36px rgba(79,70,229,0.45)"
-          : "0 0 0 4px rgba(255,255,255,0.08), 0 12px 28px rgba(0,0,0,0.18)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = isBrand
-          ? "0 10px 24px rgba(79,70,229,0.35)"
-          : "0 6px 18px rgba(0,0,0,0.12)";
-      }}
-      onFocus={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = isBrand
-          ? `0 0 0 4px rgba(79,70,229,0.3), 0 0 0 8px rgba(34,193,195,0.18)`
-          : "0 0 0 4px rgba(255,255,255,0.12)";
-      }}
-      onBlur={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.boxShadow = isBrand
-          ? "0 10px 24px rgba(79,70,229,0.35)"
-          : "0 6px 18px rgba(0,0,0,0.12)";
-      }}
     >
       {props.title}
     </button>
@@ -154,7 +132,7 @@ export default function TerminBuchen() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  /* --------- Helper: Submit ausgelagert (vermeidet TSX-Glitches) --------- */
+  /* --------- Helper: Submit ausgelagert --------- */
   async function submitForm() {
     setStatus(null);
 
@@ -168,22 +146,27 @@ export default function TerminBuchen() {
 
     setLoading(true);
     try {
-      await sendAppointmentMail({
-        topic: `${service} • ${customerType === "privat" ? "Privatkunde" : "Gewerbekunde"}`,
+      await sendContact({
         name,
-        phone,
         email,
-        wish: info, // Infos/Kommentare
-        refLink: typeof window !== "undefined" ? window.location.href : "",
-        source: "Termin",
+        phone,
+        message: [
+          service ? `Thema: ${service}` : null,
+          customerType
+            ? `Kundentyp: ${customerType === "privat" ? "Privatkunde" : "Gewerbekunde"}`
+            : null,
+          info ? `Hinweis: ${info}` : null,
+          typeof window !== "undefined" ? `Ref: ${window.location.href}` : null,
+        ]
+          .filter(Boolean)
+          .join(" | "),
       });
       setStep("done");
-    } catch (err) {
-      ;console.error("EmailJS error →", err); // führendes Semikolon verhindert TSX-Merge
-      const e = err as any;
+    } catch (err: any) {
+      console.error("EmailJS error →", err);
       const msg =
-        e?.text ||
-        e?.message ||
+        err?.text ||
+        err?.message ||
         (typeof err === "string" ? err : "") ||
         "Senden fehlgeschlagen. Bitte später erneut versuchen.";
       setStatus(String(msg));
@@ -201,14 +184,7 @@ export default function TerminBuchen() {
           Bitte zuerst auswählen:
         </p>
 
-        <div
-          style={{
-            display: "grid",
-            gap: 14,
-            marginTop: 16,
-            gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-          }}
-        >
+        <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
           <OptionCard
             title="Privatkunde"
             variant="brand"
@@ -233,18 +209,14 @@ export default function TerminBuchen() {
   /* --------- Step 2: Service-Auswahl --------- */
   if (step === "service" && customerType) {
     const cfg = DATA[customerType];
-
     return (
       <section className="panel mt-6">
         <button className="btn btn--ghost" onClick={() => setStep("customerType")}>
           ← zurück
         </button>
-
         <div style={{ ...sectionTitle, marginTop: 16 }}>
           {customerType === "privat" ? "Für Privatkunden" : "Für Gewerbekunden"}
         </div>
-
-        {/* Allgemeiner Bedarf */}
         <div className="mt-4">
           <div style={subTitle}>Allgemeiner Gesprächsbedarf</div>
           <OptionCard
@@ -256,17 +228,9 @@ export default function TerminBuchen() {
             }}
           />
         </div>
-
-        {/* Spezielle Themen */}
         <div className="mt-6">
           <div style={subTitle}>{cfg.specialLabel}</div>
-          <div
-            style={{
-              display: "grid",
-              gap: 12,
-              gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-            }}
-          >
+          <div style={{ display: "grid", gap: 12 }}>
             {cfg.special.map((topic) => (
               <OptionCard
                 key={topic}
@@ -303,13 +267,10 @@ export default function TerminBuchen() {
             await submitForm();
           }}
         >
-          {/* Name */}
           <div>
             <div style={labelStyle}>Vollständiger Name *</div>
             <input
               style={fieldBase}
-              onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.35)`)}
-              onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Max Muster"
@@ -317,14 +278,11 @@ export default function TerminBuchen() {
             />
           </div>
 
-          {/* Telefon & E-Mail */}
           <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={labelStyle}>Telefon</div>
               <input
                 style={fieldBase}
-                onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(34,193,195,.35)`)}
-                onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+49 …"
@@ -335,8 +293,6 @@ export default function TerminBuchen() {
               <div style={labelStyle}>E-Mail</div>
               <input
                 style={fieldBase}
-                onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.35)`)}
-                onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
@@ -346,20 +302,16 @@ export default function TerminBuchen() {
             </div>
           </div>
 
-          {/* Infos / Kommentare */}
           <div>
             <div style={labelStyle}>Informationen & Kommentare (optional)</div>
             <textarea
               style={{ ...fieldBase, minHeight: 120, resize: "vertical" }}
-              onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.25)`)}
-              onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
               value={info}
               onChange={(e) => setInfo(e.target.value)}
               placeholder="Wunschtermin, Anliegen, Rückrufzeiten …"
             />
           </div>
 
-          {/* Einwilligung */}
           <label
             style={{
               display: "flex",
