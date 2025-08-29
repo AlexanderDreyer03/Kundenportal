@@ -10,8 +10,12 @@ export type ContactPayload = {
   message?: string;
 };
 
+/**
+ * Mapping der Payload auf die Template-Variablen in EmailJS.
+ * 👉 Passe die Keys an, falls dein Template andere Variablennamen verwendet.
+ * Standard bei EmailJS ist: from_name, reply_to, phone, message
+ */
 function mapPayload(p: ContactPayload) {
-  // ↳ Diese Keys müssen zu deinem EmailJS-Template passen!
   return {
     from_name: p.name,
     reply_to: p.email,
@@ -25,12 +29,18 @@ export async function sendContact(p: ContactPayload) {
     const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, mapPayload(p));
     return res;
   } catch (err: any) {
-    // ← Hier sehen wir den echten Grund (401/404/422 etc.)
     console.error("EmailJS send error:", err);
     const msg =
-      err?.text || err?.message || (typeof err === "string" ? err : "Unknown EmailJS error");
+      err?.text ||
+      err?.message ||
+      (typeof err === "string" ? err : "Unbekannter Fehler");
     throw new Error(msg);
   }
+}
+
+// Kompatibilität: Falls noch irgendwo sendAppointmentMail importiert wird
+export const sendAppointmentMail = (p: ContactPayload) => sendContact(p);
+
 }
 
 // Kompatibilität für vorhandenen Import in TerminBuchen.tsx
