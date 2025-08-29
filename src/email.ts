@@ -1,34 +1,21 @@
-// src/email.ts
-import { send } from "@emailjs/browser";
+import emailjs from "@emailjs/browser";
 
-const SERVICE_ID  = import.meta.env.VITE_EMAILJS_SERVICE_ID as string;
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID as string;
-const PUBLIC_KEY  = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string;
+const SERVICE_ID = "service_cxh6jaq";
+const TEMPLATE_ID = "template_f1ocakc";
 
-export type AppointmentPayload = {
-  topic: string;
+/**
+ * Sendet die Daten aus deinem Formular via EmailJS
+ */
+export function sendContact(data: {
   name: string;
+  email: string;
   phone?: string;
-  email?: string;
-  wish?: string;
-  refLink?: string;
-  source?: string;
-  when?: string;
-  page?: string;
-};
-
-export async function sendAppointmentMail(data: AppointmentPayload) {
-  const params = {
-    topic: data.topic,
-    name: data.name,
+  message?: string;
+}) {
+  return emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+    from_name: data.name,
+    reply_to: data.email,
     phone: data.phone ?? "",
-    email: data.email ?? "",
-    wish: data.wish ?? "",
-    refLink: data.refLink ?? "",
-    source: data.source ?? "",
-    when: data.when ?? new Date().toLocaleString(),
-    page: typeof window !== "undefined" ? window.location.href : "",
-  };
-
-  return send(SERVICE_ID, TEMPLATE_ID, params, PUBLIC_KEY);
+    message: data.message ?? "",
+  });
 }
