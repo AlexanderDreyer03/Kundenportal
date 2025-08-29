@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendContact } from "../email";
+import { sendAppointmentMail } from "../email";
 
 type Step = "customerType" | "service" | "form" | "done";
 type CustomerType = "privat" | "gewerbe";
@@ -38,7 +38,7 @@ const DATA: Record<
   },
 };
 
-/* ---------- UI Styles (kontraststark & modern) ---------- */
+/* ---------- UI Styles ---------- */
 
 const COLORS = {
   bgCard: "#f3f5f8",
@@ -136,7 +136,7 @@ export default function TerminBuchen() {
   async function submitForm() {
     setStatus(null);
 
-    // Validierung
+    // Validierung (unverändert)
     if (!name.trim()) return setStatus("Bitte vollständigen Namen eingeben.");
     if (!phone.trim() && !email.trim())
       return setStatus("Bitte Telefon ODER E-Mail angeben.");
@@ -146,27 +146,23 @@ export default function TerminBuchen() {
 
     setLoading(true);
     try {
-      await sendContact({
+      // ✅ einzig notwendige Änderung: Payload-Felder ergänzen
+      await sendAppointmentMail({
         name,
         email,
         phone,
-        message: [
-          service ? `Thema: ${service}` : null,
-          customerType
-            ? `Kundentyp: ${customerType === "privat" ? "Privatkunde" : "Gewerbekunde"}`
-            : null,
-          info ? `Hinweis: ${info}` : null,
-          typeof window !== "undefined" ? `Ref: ${window.location.href}` : null,
-        ]
-          .filter(Boolean)
-          .join(" | "),
+        topic: service ?? "",
+        customerType: customerType === "privat" ? "Privatkunde" : "Gewerbekunde",
+        message: info,
+        refLink: typeof window !== "undefined" ? window.location.href : "",
       });
       setStep("done");
-    } catch (err: any) {
+    } catch (err) {
       console.error("EmailJS error →", err);
+      const e = err as any;
       const msg =
-        err?.text ||
-        err?.message ||
+        e?.text ||
+        e?.message ||
         (typeof err === "string" ? err : "") ||
         "Senden fehlgeschlagen. Bitte später erneut versuchen.";
       setStatus(String(msg));
@@ -184,7 +180,14 @@ export default function TerminBuchen() {
           Bitte zuerst auswählen:
         </p>
 
-        <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
+        <div
+          style={{
+            display: "grid",
+            gap: 14,
+            marginTop: 16,
+            gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+          }}
+        >
           <OptionCard
             title="Privatkunde"
             variant="brand"
@@ -209,14 +212,18 @@ export default function TerminBuchen() {
   /* --------- Step 2: Service-Auswahl --------- */
   if (step === "service" && customerType) {
     const cfg = DATA[customerType];
+
     return (
       <section className="panel mt-6">
         <button className="btn btn--ghost" onClick={() => setStep("customerType")}>
           ← zurück
         </button>
+
         <div style={{ ...sectionTitle, marginTop: 16 }}>
           {customerType === "privat" ? "Für Privatkunden" : "Für Gewerbekunden"}
         </div>
+
+        {/* Allgemeiner Bedarf */}
         <div className="mt-4">
           <div style={subTitle}>Allgemeiner Gesprächsbedarf</div>
           <OptionCard
@@ -228,9 +235,17 @@ export default function TerminBuchen() {
             }}
           />
         </div>
+
+        {/* Spezielle Themen */}
         <div className="mt-6">
           <div style={subTitle}>{cfg.specialLabel}</div>
-          <div style={{ display: "grid", gap: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+            }}
+          >
             {cfg.special.map((topic) => (
               <OptionCard
                 key={topic}
@@ -267,10 +282,13 @@ export default function TerminBuchen() {
             await submitForm();
           }}
         >
+          {/* Name */}
           <div>
             <div style={labelStyle}>Vollständiger Name *</div>
             <input
               style={fieldBase}
+              onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.35)`)}
+              onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Max Muster"
@@ -278,11 +296,14 @@ export default function TerminBuchen() {
             />
           </div>
 
+          {/* Telefon & E-Mail */}
           <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={labelStyle}>Telefon</div>
               <input
                 style={fieldBase}
+                onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(34,193,195,.35)`)}
+                onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+49 …"
@@ -293,6 +314,8 @@ export default function TerminBuchen() {
               <div style={labelStyle}>E-Mail</div>
               <input
                 style={fieldBase}
+                onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.35)`)}
+                onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
@@ -302,16 +325,20 @@ export default function TerminBuchen() {
             </div>
           </div>
 
+          {/* Infos / Kommentare */}
           <div>
             <div style={labelStyle}>Informationen & Kommentare (optional)</div>
             <textarea
               style={{ ...fieldBase, minHeight: 120, resize: "vertical" }}
+              onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.25)`)}
+              onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
               value={info}
               onChange={(e) => setInfo(e.target.value)}
               placeholder="Wunschtermin, Anliegen, Rückrufzeiten …"
             />
           </div>
 
+          {/* Einwilligung */}
           <label
             style={{
               display: "flex",
