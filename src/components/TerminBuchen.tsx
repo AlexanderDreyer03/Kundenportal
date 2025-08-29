@@ -132,10 +132,11 @@ export default function TerminBuchen() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  /* --------- Helper: Submit --------- */
+  /* --------- Helper: Submit ausgelagert --------- */
   async function submitForm() {
     setStatus(null);
 
+    // Validierung (unverändert)
     if (!name.trim()) return setStatus("Bitte vollständigen Namen eingeben.");
     if (!phone.trim() && !email.trim())
       return setStatus("Bitte Telefon ODER E-Mail angeben.");
@@ -145,6 +146,7 @@ export default function TerminBuchen() {
 
     setLoading(true);
     try {
+      // ✅ einzig notwendige Änderung: Payload-Felder ergänzen
       await sendAppointmentMail({
         name,
         email,
@@ -152,7 +154,7 @@ export default function TerminBuchen() {
         topic: service ?? "",
         customerType: customerType === "privat" ? "Privatkunde" : "Gewerbekunde",
         message: info,
-        refLink: typeof window !== "undefined" ? window.location.href : "", // ✅ Referenz-Link wird mitgeschickt
+        refLink: typeof window !== "undefined" ? window.location.href : "",
       });
       setStep("done");
     } catch (err) {
@@ -207,7 +209,7 @@ export default function TerminBuchen() {
     );
   }
 
-  /* --------- Step 2: Service --------- */
+  /* --------- Step 2: Service-Auswahl --------- */
   if (step === "service" && customerType) {
     const cfg = DATA[customerType];
 
@@ -285,6 +287,8 @@ export default function TerminBuchen() {
             <div style={labelStyle}>Vollständiger Name *</div>
             <input
               style={fieldBase}
+              onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.35)`)}
+              onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Max Muster"
@@ -298,6 +302,8 @@ export default function TerminBuchen() {
               <div style={labelStyle}>Telefon</div>
               <input
                 style={fieldBase}
+                onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(34,193,195,.35)`)}
+                onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+49 …"
@@ -308,6 +314,8 @@ export default function TerminBuchen() {
               <div style={labelStyle}>E-Mail</div>
               <input
                 style={fieldBase}
+                onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.35)`)}
+                onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
@@ -317,11 +325,13 @@ export default function TerminBuchen() {
             </div>
           </div>
 
-          {/* Infos */}
+          {/* Infos / Kommentare */}
           <div>
             <div style={labelStyle}>Informationen & Kommentare (optional)</div>
             <textarea
               style={{ ...fieldBase, minHeight: 120, resize: "vertical" }}
+              onFocus={(el) => (el.currentTarget.style.boxShadow = `0 0 0 3px rgba(79,70,229,.25)`)}
+              onBlur={(el) => (el.currentTarget.style.boxShadow = "none")}
               value={info}
               onChange={(e) => setInfo(e.target.value)}
               placeholder="Wunschtermin, Anliegen, Rückrufzeiten …"
