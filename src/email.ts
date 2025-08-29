@@ -8,19 +8,21 @@ export type ContactPayload = {
   email: string;
   phone?: string;
 
-  // optionale Felder – falls du sie mitschickst
-  topic?: string;          // z. B. ausgewählter Service
+  // optionale Felder
+  topic?: string;          // z. B. ausgewählter Service/Thema
   customerType?: string;   // "Privatkunde" | "Gewerbekunde"
-  message?: string;        // Freitext/Hinweis
+  message?: string;        // Freitext / Kommentar
   refLink?: string;        // window.location.href
 };
 
 /**
  * Superset-Mapping: bedient mehrere mögliche Template-Variablennamen.
- * So kommen deine Werte im EmailJS-Template an, egal ob du z. B.
- * {{from_name}} oder {{name}} benutzt, {{reply_to}} oder {{email}}, etc.
+ * So landen deine Werte im EmailJS-Template, egal ob du z. B.
+ * {{from_name}} oder {{name}} nutzt, {{reply_to}} oder {{email}}, etc.
  */
 function mapPayload(p: ContactPayload) {
+  const msg = p.message ?? "";
+
   return {
     // Name
     from_name: p.name,
@@ -41,13 +43,20 @@ function mapPayload(p: ContactPayload) {
     customer_type: p.customerType ?? "",
     kundentyp: p.customerType ?? "",
 
-    // Nachricht / Hinweise
-    message: p.message ?? "",
-    notes: p.message ?? "",
+    // Nachricht / Hinweise / Kommentare (ALLE gängigen Aliasse)
+    message: msg,
+    notes: msg,
+    info: msg,
+    information: msg,
+    informationen: msg,
+    kommentar: msg,
+    comments: msg,
+    hinweis: msg,
 
-    // Referenzlink
+    // Referenzlink (falls im Template genutzt)
     ref_link: p.refLink ?? "",
     refLink: p.refLink ?? "",
+    ref: p.refLink ?? "",
   };
 }
 
